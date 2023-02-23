@@ -314,10 +314,6 @@ class PRBVolpathIntegrator(RBIntegrator):
         is_primal = mode == dr.ADMode.Primal
         active = mi.Bool(active_medium | active_surface)
 
-        medium = dr.select(active, medium, dr.zeros(mi.MediumPtr))
-        # Potentially escaping the medium if this is the current medium's boundary
-        medium[active_surface & si.is_medium_transition()] = ref_interaction.target_medium(ds.d);
-
         ref_interaction = dr.zeros(mi.Interaction3f)
         ref_interaction[active_medium] = mei
         ref_interaction[active_surface] = si
@@ -327,6 +323,10 @@ class PRBVolpathIntegrator(RBIntegrator):
         invalid = dr.eq(ds.pdf, 0.0)
         emitter_val[invalid] = 0.0
         active &= ~invalid
+
+        medium = dr.select(active, medium, dr.zeros(mi.MediumPtr))
+        # Potentially escaping the medium if this is the current medium's boundary
+        medium[active_surface & si.is_medium_transition()] = si.target_medium(ds.d);
 
         ray = ref_interaction.spawn_ray(ds.d)
         total_dist = mi.Float(0.0)
